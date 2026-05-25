@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMind — IA para documentos</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ── TOP BAR ─────────────────────────────────────── -->
+<header class="topbar">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="8" y1="13" x2="16" y2="13"/>
+        <line x1="8" y1="17" x2="12" y2="17"/>
+      </svg>
+    </div>
+    <span>Docu<strong>Mind</strong></span>
+  </div>
+  <div class="topbar-status" id="statusBadge">
+    <span class="status-dot idle"></span>
+    Listo
+  </div>
+</header>
+
+<!-- ── LAYOUT PRINCIPAL ────────────────────────────── -->
+<main class="layout">
+
+  <!-- PANEL IZQUIERDO -->
+  <aside class="sidebar">
+
+    <!-- Upload -->
+    <div class="card upload-card" id="uploadCard">
+      <div class="card-label">📄 Documento</div>
+      <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <div class="dz-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <p class="dz-title">Arrastra tu PDF aquí</p>
+        <p class="dz-sub">o haz clic para seleccionar</p>
+      </div>
+      <input type="file" id="fileInput" accept=".pdf" style="display:none">
+
+      <!-- Info del doc procesado -->
+      <div class="doc-info hidden" id="docInfo">
+        <div class="doc-info-icon">✓</div>
+        <div>
+          <div class="doc-name" id="docName">—</div>
+          <div class="doc-meta" id="docMeta">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preguntas sugeridas -->
+    <div class="card suggestions-card">
+      <div class="card-label">💡 Preguntas sugeridas</div>
+      <div class="suggestions-list">
+        <button class="suggestion-btn" onclick="useQuestion(this)">
+          ¿Cuál es el objeto principal de este documento?
+        </button>
+        <button class="suggestion-btn" onclick="useQuestion(this)">
+          ¿Qué obligaciones tienen las partes involucradas?
+        </button>
+        <button class="suggestion-btn" onclick="useQuestion(this)">
+          ¿Cuáles son las fechas o plazos importantes?
+        </button>
+        <button class="suggestion-btn" onclick="useQuestion(this)">
+          ¿Hay cláusulas de penalización o multas?
+        </button>
+        <button class="suggestion-btn" onclick="useQuestion(this)">
+          Resume este documento en los 3 puntos clave
+        </button>
+        <button class="suggestion-btn" onclick="useQuestion(this)">
+          ¿Cuánto tiempo dura este acuerdo o contrato?
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="card stats-card" id="statsCard" style="display:none">
+      <div class="card-label">📊 Estadísticas</div>
+      <div class="stats-grid">
+        <div class="stat"><span id="statPages">—</span><small>Páginas</small></div>
+        <div class="stat"><span id="statWords">—</span><small>Palabras</small></div>
+        <div class="stat"><span id="statQuestions">0</span><small>Preguntas</small></div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- PANEL PRINCIPAL - CHAT -->
+  <section class="chat-col">
+
+    <!-- Mensajes -->
+    <div class="chat-messages" id="chatMessages">
+      <!-- Estado inicial -->
+      <div class="chat-welcome" id="chatWelcome">
+        <div class="welcome-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <h2>Sube un documento para comenzar</h2>
+        <p>DocuMind leerá tu PDF y podrás hacerle cualquier pregunta en español. Las respuestas siempre estarán basadas en el contenido real del documento.</p>
+        <div class="welcome-chips">
+          <span class="chip">📋 Contratos</span>
+          <span class="chip">⚖️ Documentos legales</span>
+          <span class="chip">📑 Manuales</span>
+          <span class="chip">📊 Informes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input area -->
+    <div class="chat-input-area">
+      <div class="input-row">
+        <textarea
+          id="questionInput"
+          placeholder="Sube un PDF para comenzar..."
+          rows="1"
+          disabled
+          onkeydown="handleKey(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendQuestion()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+      <div class="input-hint">
+        DocuMind responde basándose únicamente en el contenido del documento cargado
+      </div>
+    </div>
+
+  </section>
+</main>
+
+<!-- TOAST -->
+<div class="toast-host" id="toastHost"></div>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay hidden" id="loadingOverlay">
+  <div class="loading-card">
+    <div class="spinner"></div>
+    <p id="loadingText">Procesando documento...</p>
+    <small>Esto puede tardar 20-40 segundos la primera vez</small>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
